@@ -62,21 +62,44 @@ library(RColorBrewer)
 library(bipartiteD3)
 
 # Load and organize bipartite network data
+data=read.csv("bipartite_data.csv",header=TRUE) %>%
+  rename(higher = Parasite, lower = Host) %>%
+  mutate(webID = "web1")
+
 data_common <- read.csv("bipartite_data_commononly.csv", header = TRUE) %>%
   rename(higher = Parasite, lower = Host) %>%
   mutate(webID = "web1")
 
 # Consolidate frequencies by higher and lower levels
-consolidated_data <- data_common %>%
+consolidated_data <- data %>%
+  group_by(higher, lower, webID) %>%
+  summarise(freq = n(), .groups = 'drop')
+
+consolidated_data_common <- data_common %>%
   group_by(higher, lower, webID) %>%
   summarise(freq = n(), .groups = 'drop')
 
 # Convert consolidated data frame to a list of webs
 web_list <- bipartite::frame2webs(consolidated_data)
+web_list_common <- bipartite::frame2webs(consolidated_data_common)
 
 # Access the matrix for the specific webID
-common_parasite_host_matrix <- web_list$web1
+parasite_host_matrix <- web_list$web1
+common_parasite_host_matrix <- web_list_common$web1
 
 # Create bipartite network plot
-bipartite_D3(common_parasite_host_matrix, colouroption = "brewer", ColourBy = 2, 
-             PrimaryLab = 'Bird Host', SecondaryLab = 'Hippoboscid Fly', SiteNames = ' ')
+bipartite_D3(parasite_host_matrix,
+             colouroption="brewer", 
+             ColourBy=2, 
+             PrimaryLab = 'Bird Host', 
+             SecondaryLab = 'Hippoboscid Fly', 
+             SiteNames = ' ',
+             Pad = 3)
+
+bipartite_D3(common_parasite_host_matrix, 
+             colouroption = "brewer", 
+             ColourBy = 2, 
+             PrimaryLab = 'Bird Host', 
+             SecondaryLab = 'Hippoboscid Fly', 
+             SiteNames = ' ')
+
